@@ -1,0 +1,3 @@
+C:/Users/CS/CLionProjects/ChatProgram/cmake-build-debug/CMakeFiles/ChatProgram.dir
+C:/Users/CS/CLionProjects/ChatProgram/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/CS/CLionProjects/ChatProgram/cmake-build-debug/CMakeFiles/rebuild_cache.dir
