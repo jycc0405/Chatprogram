@@ -5,8 +5,6 @@
 #ifndef CHATPROGRAM_CLIENTCONNECTION_H
 #define CHATPROGRAM_CLIENTCONNECTION_H
 
-
-#include "Client.h"
 #include <string>
 #include <thread>
 #include <functional>
@@ -14,7 +12,9 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-struct ChatMessage;
+#include "Client.h"
+#include "../ChatMessage.h"
+#include "CommandDispatcher.h"
 
 class ClientConnection {
 public:
@@ -30,7 +30,7 @@ public:
 
     void setInactive();
 
-    void start(const std::function<void(const ChatMessage &, SOCKET)> &broadcastFunc);
+    void start(const std::function<void(const std::string &, const std::string &)> &commandDispatcher);
 
     void join();
 
@@ -38,7 +38,7 @@ private:
     Client clientData;
     std::thread threadObj;
 
-    void handleClient(const std::function<void(const ChatMessage &, SOCKET)> &broadcastFunc);
+    void handleClient(const std::function<void(const std::string &, const std::string &)> &commandDispatcher);
 };
 
 #endif //CHATPROGRAM_CLIENTCONNECTION_H

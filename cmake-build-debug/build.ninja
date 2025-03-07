@@ -61,6 +61,30 @@ build CMakeFiles/ChatProgram.dir/Server/ClientConnection.cpp.obj: CXX_COMPILER__
   OBJECT_DIR = CMakeFiles\ChatProgram.dir
   OBJECT_FILE_DIR = CMakeFiles\ChatProgram.dir\Server
 
+build CMakeFiles/ChatProgram.dir/Server/ChatServer.cpp.obj: CXX_COMPILER__ChatProgram_unscanned_Debug C$:/Users/CS/CLionProjects/ChatProgram/Server/ChatServer.cpp || cmake_object_order_depends_target_ChatProgram
+  DEP_FILE = CMakeFiles\ChatProgram.dir\Server\ChatServer.cpp.obj.d
+  FLAGS = -g -fdiagnostics-color=always
+  OBJECT_DIR = CMakeFiles\ChatProgram.dir
+  OBJECT_FILE_DIR = CMakeFiles\ChatProgram.dir\Server
+
+build CMakeFiles/ChatProgram.dir/Server/CommandDispatcher.cpp.obj: CXX_COMPILER__ChatProgram_unscanned_Debug C$:/Users/CS/CLionProjects/ChatProgram/Server/CommandDispatcher.cpp || cmake_object_order_depends_target_ChatProgram
+  DEP_FILE = CMakeFiles\ChatProgram.dir\Server\CommandDispatcher.cpp.obj.d
+  FLAGS = -g -fdiagnostics-color=always
+  OBJECT_DIR = CMakeFiles\ChatProgram.dir
+  OBJECT_FILE_DIR = CMakeFiles\ChatProgram.dir\Server
+
+build CMakeFiles/ChatProgram.dir/Client/ChatSession.cpp.obj: CXX_COMPILER__ChatProgram_unscanned_Debug C$:/Users/CS/CLionProjects/ChatProgram/Client/ChatSession.cpp || cmake_object_order_depends_target_ChatProgram
+  DEP_FILE = CMakeFiles\ChatProgram.dir\Client\ChatSession.cpp.obj.d
+  FLAGS = -g -fdiagnostics-color=always
+  OBJECT_DIR = CMakeFiles\ChatProgram.dir
+  OBJECT_FILE_DIR = CMakeFiles\ChatProgram.dir\Client
+
+build CMakeFiles/ChatProgram.dir/Client/ConnectionManager.cpp.obj: CXX_COMPILER__ChatProgram_unscanned_Debug C$:/Users/CS/CLionProjects/ChatProgram/Client/ConnectionManager.cpp || cmake_object_order_depends_target_ChatProgram
+  DEP_FILE = CMakeFiles\ChatProgram.dir\Client\ConnectionManager.cpp.obj.d
+  FLAGS = -g -fdiagnostics-color=always
+  OBJECT_DIR = CMakeFiles\ChatProgram.dir
+  OBJECT_FILE_DIR = CMakeFiles\ChatProgram.dir\Client
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target ChatProgram
@@ -69,9 +93,9 @@ build CMakeFiles/ChatProgram.dir/Server/ClientConnection.cpp.obj: CXX_COMPILER__
 #############################################
 # Link the executable ChatProgram.exe
 
-build ChatProgram.exe: CXX_EXECUTABLE_LINKER__ChatProgram_Debug CMakeFiles/ChatProgram.dir/main.cpp.obj CMakeFiles/ChatProgram.dir/Server/ClientConnection.cpp.obj
+build ChatProgram.exe: CXX_EXECUTABLE_LINKER__ChatProgram_Debug CMakeFiles/ChatProgram.dir/main.cpp.obj CMakeFiles/ChatProgram.dir/Server/ClientConnection.cpp.obj CMakeFiles/ChatProgram.dir/Server/ChatServer.cpp.obj CMakeFiles/ChatProgram.dir/Server/CommandDispatcher.cpp.obj CMakeFiles/ChatProgram.dir/Client/ChatSession.cpp.obj CMakeFiles/ChatProgram.dir/Client/ConnectionManager.cpp.obj
   FLAGS = -g
-  LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
+  LINK_LIBRARIES = -lws2_32  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\ChatProgram.dir
   POST_BUILD = cd .
   PRE_LINK = cd .

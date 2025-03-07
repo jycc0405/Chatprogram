@@ -8,20 +8,54 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <vector>
+#include <mutex>
+#include <thread>
+#include <functional>
+#include <condition_variable>
 
 #include "Client.h"
+#include "ClientConnection.h"
+#include "CommandDispatcher.h"
 
-
-class ChatServer{
+class ChatServer {
 public:
-    ChatServer();
+    explicit ChatServer(int port);
+
     ~ChatServer();
+
+    bool start();
+
+    void stop();
+
+    bool isRunning();
 
 private:
     int port;
-    SOCKET socket;
-    std::vector<Client> clients;
+    SOCKET serverSocket;
+    bool running;
+    std::vector<ClientConnection *> clients;
+    std::mutex clientMutex;
+    std::thread acceptThread;
+    std::thread monitorThread;
+    std::thread cleaningThread;
+    std::mutex cvMutex;
+    std::condition_variable cv;
 
+    void acceptConnections();
+
+    void monitorConsole();
+
+    void cleaningClient();
+
+    std::string getHostInfo() const;
+
+    void broadcastMessage(const ChatMessage &chatMessage);
+
+    void whisperMessage(const ChatMessage &chatMessage);
+
+    CommandDispatcher dispatcher;
+
+    void registerCommands();
 };
 
 #endif //CHATPROGRAM_CHATSERVER_H

@@ -7,4 +7,16 @@ add_executable(ChatProgram main.cpp
         Server/Client.h
         Server/ClientConnection.h
         Server/ClientConnection.cpp
-        Server/ChatServer.h)
+        Server/ChatServer.h
+        Server/ChatServer.cpp
+        ChatMessage.h
+        Server/CommandDispatcher.h
+        Server/CommandDispatcher.cpp
+        WinSockInitializer.h
+        Client/ChatSession.h
+        Client/ChatSession.cpp
+        Client/ConnectionManager.h
+        Client/ConnectionManager.cpp
+)
+
+target_link_libraries(ChatProgram PRIVATE ws2_32)
