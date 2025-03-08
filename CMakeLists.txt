@@ -3,6 +3,8 @@ project(ChatProgram)
 
 set(CMAKE_CXX_STANDARD 17)
 
+include_directories(${CMAKE_SOURCE_DIR}/include)
+
 add_executable(ChatProgram main.cpp
         Server/Client.h
         Server/ClientConnection.h
@@ -20,3 +22,5 @@ add_executable(ChatProgram main.cpp
 )
 
 target_link_libraries(ChatProgram PRIVATE ws2_32)
+
+target_link_options(ChatProgram PRIVATE -static -static-libstdc++ -static-libgcc)

@@ -36,10 +36,11 @@ int main() {
 
             break;
         }
-        case 2:
+        case 2: {
 
-            std::string ip,nickname;
+            std::string ip, nickname;
             int port;
+            std::cin.ignore();
             std::cout << "서버 IP 주소를 입력하세요: ";
             std::getline(std::cin, ip);
             std::cout << "서버 포트 번호를 입력하세요: ";
@@ -48,18 +49,21 @@ int main() {
             std::cout << "닉네임을 입력하세요: ";
             std::getline(std::cin, nickname);
 
-            ConnectionManager conn(ip,port);
-            if (!conn.connectToServer()){
+            ConnectionManager conn(ip, port);
+            if (!conn.connectToServer()) {
                 std::cerr << "서버 연결 실패\n";
                 return -1;
             }
 
-            ChatSession session(conn.getSocket(),nickname);
+            ChatSession session(conn.getSocket(), nickname);
             session.start();
 
             conn.disconnect();
 
             break;
+        }
+        default:
+            std::cout << "Unknown";
     }
 
     return 0;

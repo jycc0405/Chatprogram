@@ -16,12 +16,12 @@ using CommandHandler = std::function<void(const ChatMessage &chatMessage)>;
 
 class CommandDispatcher {
 public:
-    void registerCommand(const std::string &command, CommandHandler handler);
+    void registerCommand(ChatMessage::Command command, CommandHandler handler);
 
-    void dispatch(const std::string &input,const std::string &sender);
+    void dispatch(const ChatMessage & chatMessage);
 
 private:
-    std::unordered_map<std::string, CommandHandler> handlers;
+    std::unordered_map<ChatMessage::Command, CommandHandler> handlers;
 };
 
 #endif //CHATPROGRAM_COMMANDDISPATCHER_H

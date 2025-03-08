@@ -27,7 +27,7 @@ public:
 
     void stop();
 
-    bool isRunning();
+    bool isRunning() const;
 
 private:
     int port;
@@ -52,6 +52,8 @@ private:
     void broadcastMessage(const ChatMessage &chatMessage);
 
     void whisperMessage(const ChatMessage &chatMessage);
+
+    void quitMessage(const ChatMessage &chatMessage);
 
     CommandDispatcher dispatcher;
 

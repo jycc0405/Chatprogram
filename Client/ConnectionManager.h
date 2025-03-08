@@ -12,11 +12,11 @@
 
 class ConnectionManager{
 public:
-    ConnectionManager(const std::string &ip, int port);
+    ConnectionManager(std::string ip, int port);
     ~ConnectionManager();
 
     bool connectToServer();
-    SOCKET getSocket() const;
+    [[nodiscard]] SOCKET getSocket() const;
     void disconnect();
 
 private:

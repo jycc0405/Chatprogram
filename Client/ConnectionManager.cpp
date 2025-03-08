@@ -2,12 +2,12 @@
 // Created by CS on 25. 3. 8.
 //
 #include "ConnectionManager.h"
-#include "ConnectionManager.h"
 
 #include <iostream>
+#include <utility>
 
-ConnectionManager::ConnectionManager(const std::string &ip, int port)
-        : serverIp(ip), port(port), clientSocket(-1) {}
+ConnectionManager::ConnectionManager(std::string ip, int port)
+        : serverIp(std::move(ip)), port(port), clientSocket(-1) {}
 
 ConnectionManager::~ConnectionManager() {
     disconnect();

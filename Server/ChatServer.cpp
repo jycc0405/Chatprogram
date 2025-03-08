@@ -3,7 +3,6 @@
 //
 #include "ChatServer.h"
 #include <iostream>
-#include <sstream>
 
 
 ChatServer::ChatServer(int port) : port(port), serverSocket(INVALID_SOCKET), running(false) {
@@ -21,7 +20,7 @@ bool ChatServer::start() {
         return false;
     }
 
-    sockaddr_in serverAddr;
+    sockaddr_in serverAddr{};
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(port);
     serverAddr.sin_addr.s_addr = htons(INADDR_ANY);
@@ -74,13 +73,13 @@ void ChatServer::stop() {
     clients.clear();
 }
 
-bool ChatServer::isRunning() {
+bool ChatServer::isRunning() const {
     return running;
 }
 
 void ChatServer::acceptConnections() {
     while (running) {
-        sockaddr_in clientAddr;
+        sockaddr_in clientAddr{};
         socklen_t addrLen = sizeof(clientAddr);
         SOCKET clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &addrLen);
 
@@ -107,8 +106,8 @@ void ChatServer::acceptConnections() {
             std::lock_guard<std::mutex> lockGuard(clientMutex);
             auto *newClient = new ClientConnection(clientSocket, nickname);
             clients.push_back(newClient);
-            newClient->start([this](const std::string &input, const std::string &sender) {
-                dispatcher.dispatch(input, sender);
+            newClient->start([this](const ChatMessage &chatMessage) {
+                dispatcher.dispatch(chatMessage);
             });
         }
 
@@ -183,13 +182,15 @@ void ChatServer::broadcastMessage(const ChatMessage &chatMessage) {
 
     std::lock_guard<std::mutex> lock(clientMutex);
     for (auto client: clients) {
-        send(client->getSocket(), fullMessage.c_str(), fullMessage.size(), 0);
+        send(client->getSocket(), fullMessage.c_str(), (int) fullMessage.size(), 0);
     }
 }
 
 void ChatServer::whisperMessage(const ChatMessage &chatMessage) {
-    std::string fullMessage = chatMessage.sender + " - " + chatMessage.content + '\n';
-    std::cout << "귓속말 : " + fullMessage;
+    if (chatMessage.sender == chatMessage.target) return;
+
+    std::string fullMessage = chatMessage.sender + "부터 귓속말 : " + chatMessage.content + '\n';
+    std::cout << chatMessage.sender + " to " + chatMessage.target + " 귓속말 : " + fullMessage;
 
     bool targetFound = false;
     ClientConnection *senderClient = nullptr;
@@ -197,7 +198,7 @@ void ChatServer::whisperMessage(const ChatMessage &chatMessage) {
     std::lock_guard<std::mutex> lock(clientMutex);
     for (auto client: clients) {
         if (client->getNickname() == chatMessage.target && client->isActive()) {
-            send(client->getSocket(), fullMessage.c_str(), fullMessage.size(), 0);
+            send(client->getSocket(), fullMessage.c_str(), (int) fullMessage.size(), 0);
             targetFound = true;
         }
         if (client->getNickname() == chatMessage.sender && client->isActive()) {
@@ -207,12 +208,25 @@ void ChatServer::whisperMessage(const ChatMessage &chatMessage) {
     if (!targetFound && senderClient != nullptr) {
 
         std::string errorMessage = chatMessage.target + "은 존재하지 않거나 오프라인입니다.";
-        send(senderClient->getSocket(), errorMessage.c_str(), errorMessage.size(), 0);
+        send(senderClient->getSocket(), errorMessage.c_str(), (int) errorMessage.size(), 0);
 
     }
 }
 
+void ChatServer::quitMessage(const ChatMessage &chatMessage) {
+    std::string fullMessage = chatMessage.sender + "이(가) 서버를 종료하였습니다.";
+    std::cout << "브로드캐스트(종료메세지) : " + fullMessage;
+
+    std::lock_guard<std::mutex> lock(clientMutex);
+    for (auto client: clients) {
+        send(client->getSocket(), fullMessage.c_str(), (int) fullMessage.size(), 0);
+    }
+}
+
 void ChatServer::registerCommands() {
-    dispatcher.registerCommand("broadcast", std::bind(&ChatServer::broadcastMessage, this, std::placeholders::_1));
-    dispatcher.registerCommand("whisper", std::bind(&ChatServer::whisperMessage, this, std::placeholders::_1));
+    dispatcher.registerCommand(ChatMessage::broadcast,
+                               std::bind(&ChatServer::broadcastMessage, this, std::placeholders::_1));
+    dispatcher.registerCommand(ChatMessage::whisper,
+                               std::bind(&ChatServer::whisperMessage, this, std::placeholders::_1));
+    dispatcher.registerCommand(ChatMessage::quit, std::bind(&ChatServer::quitMessage, this, std::placeholders::_1));
 }

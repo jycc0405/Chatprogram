@@ -3,34 +3,24 @@
 //
 #include "CommandDispatcher.h"
 #include <iostream>
-#include <sstream>
+#include <utility>
 
-void CommandDispatcher::registerCommand(const std::string &command, CommandHandler handler) {
-    handlers[command] = handler;
+void CommandDispatcher::registerCommand(ChatMessage::Command command, CommandHandler handler) {
+    handlers[command] = std::move(handler);
 }
 
-void CommandDispatcher::dispatch(const std::string &input, const std::string &sender) {
-    if (input.empty() || input[0] != '/') {
-        std::cerr << "알 수 없는 메세지" << input << "\n";
+void CommandDispatcher::dispatch(const ChatMessage &chatMessage) {
+    if (chatMessage.command == ChatMessage::error) {
+        std::cerr << "알 수 없는 메세지\n";
+        chatMessage.showInfo();
         return;
     }
-    std::istringstream iss(input);
-    std::string command;
 
-    iss >> command;
-    if (!command.empty() && command[0] == '/') {
-        command = command.substr(1);
-    }
-
-    std::string message;
-    iss>>message;
-    message="sender:"+sender+" "+message;
-    ChatMessage chatMessage(message);
-
-    auto it = handlers.find(command);
+    auto it = handlers.find(chatMessage.command);
     if (it != handlers.end()) {
         it->second(chatMessage);
     } else {
-        std::cerr << "알 수 없는 명령어: " << command << std::endl;
+        std::cerr << "알 수 없는 명령어: " << chatMessage.command << std::endl;
+        chatMessage.showInfo();
     }
 }

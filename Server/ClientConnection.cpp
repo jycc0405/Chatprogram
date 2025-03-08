@@ -4,14 +4,8 @@
 
 #include "ClientConnection.h"
 #include <iostream>
-#include <cstring>
 #include <algorithm>
 #include <cctype>
-
-static void trim(std::string &s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) { return !std::isspace(ch); }));
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) { return !std::isspace(ch); }).base(), s.end());
-}
 
 ClientConnection::ClientConnection(SOCKET socket, const std::string &nickname) {
     clientData.socket = socket;
@@ -40,7 +34,7 @@ void ClientConnection::setInactive() {
     clientData.active = false;
 }
 
-void ClientConnection::start(const std::function<void(const std::string &, const std::string &)> &commandDispatcher) {
+void ClientConnection::start(const std::function<void(const ChatMessage &)> &commandDispatcher) {
     threadObj = std::thread(&ClientConnection::handleClient, this, commandDispatcher);
 }
 
@@ -50,7 +44,7 @@ void ClientConnection::join() {
 }
 
 void
-ClientConnection::handleClient(const std::function<void(const std::string &, const std::string &)> &commandDispatcher) {
+ClientConnection::handleClient(const std::function<void(const ChatMessage &)> &commandDispatcher) {
     char buffer[1024];
     std::fill(&buffer[0], &buffer[1024], 0);
 
@@ -64,18 +58,27 @@ ClientConnection::handleClient(const std::function<void(const std::string &, con
             break;
         }
 
-        std::string message(buffer, bytes_received);
-        trim(message);
-        if (message.substr(0, 5) == "/quit") {
-            std::cout << "클라이언트 종료(quit): " << clientData.nickname << "\n";
-            clientData.active = false;
-            closesocket(clientData.socket);
-            break;
-        } else if (message[0] != '/') {
-            message = "/broadcast content:" + message;
-        }
+        std::string jsonString(buffer, bytes_received);
+        try {
+            json j = json::parse(jsonString);
+            ChatMessage chatMessage = j.get<ChatMessage>();
 
-        commandDispatcher(message, clientData.nickname);
+            chatMessage.sender=getNickname();
+
+            if (chatMessage.command == ChatMessage::quit) {
+                std::cout << "클라이언트 종료(quit): " << clientData.nickname << "\n";
+                clientData.active = false;
+                closesocket(clientData.socket);
+                commandDispatcher(chatMessage);
+                break;
+            }
+
+            if (chatMessage.command != ChatMessage::error)
+                commandDispatcher(chatMessage);
+
+        } catch (json::parse_error &e) {
+            std::cerr << "JSON 파싱 실패: " << e.what() << std::endl;
+        }
     }
     closesocket(clientData.socket);
 }

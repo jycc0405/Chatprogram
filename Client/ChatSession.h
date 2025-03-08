@@ -7,13 +7,14 @@
 
 #include <string>
 #include <thread>
+#include "../ChatMessage.h"
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
 class ChatSession{
 public:
-    ChatSession(SOCKET socket, const std::string &nickname);
+    ChatSession(SOCKET socket, std::string nickname);
     ~ChatSession();
 
     void start();
@@ -26,7 +27,7 @@ private:
 
     void sendMessage();
     void receiveMessage();
-    std::string transformInputParser(const std::string &input);
+    ChatMessage transformInputParser(const std::string &input);
 };
 
 #endif //CHATPROGRAM_CHATSESSION_H

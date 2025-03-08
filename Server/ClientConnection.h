@@ -28,9 +28,7 @@ public:
 
     [[nodiscard]] bool isActive() const;
 
-    void setInactive();
-
-    void start(const std::function<void(const std::string &, const std::string &)> &commandDispatcher);
+    void start(const std::function<void(const ChatMessage &)> &commandDispatcher);
 
     void join();
 
@@ -38,7 +36,7 @@ private:
     Client clientData;
     std::thread threadObj;
 
-    void handleClient(const std::function<void(const std::string &, const std::string &)> &commandDispatcher);
+    void handleClient(const std::function<void(const ChatMessage &)> &commandDispatcher);
 };
 
 #endif //CHATPROGRAM_CLIENTCONNECTION_H
