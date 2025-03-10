@@ -17,6 +17,7 @@
 #include "ClientConnection.h"
 #include "CommandDispatcher.h"
 
+// 서버 소켓 생성, 클라이언트 연결 수락, 메시지 처리, 콘솔 입력 모니터링 담당
 class ChatServer {
 public:
     explicit ChatServer(int port);

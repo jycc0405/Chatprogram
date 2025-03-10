@@ -12,6 +12,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
+// 닉네임 전송 후 메세지 송수신 처리
 class ChatSession{
 public:
     ChatSession(SOCKET socket, std::string nickname);

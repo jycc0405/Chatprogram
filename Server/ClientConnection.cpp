@@ -30,10 +30,6 @@ bool ClientConnection::isActive() const {
     return clientData.active;
 }
 
-void ClientConnection::setInactive() {
-    clientData.active = false;
-}
-
 void ClientConnection::start(const std::function<void(const ChatMessage &)> &commandDispatcher) {
     threadObj = std::thread(&ClientConnection::handleClient, this, commandDispatcher);
 }
@@ -63,7 +59,7 @@ ClientConnection::handleClient(const std::function<void(const ChatMessage &)> &c
             json j = json::parse(jsonString);
             ChatMessage chatMessage = j.get<ChatMessage>();
 
-            chatMessage.sender=getNickname();
+            chatMessage.sender = getNickname();
 
             if (chatMessage.command == ChatMessage::quit) {
                 std::cout << "클라이언트 종료(quit): " << clientData.nickname << "\n";

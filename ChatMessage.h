@@ -7,11 +7,10 @@
 
 #include <iostream>
 #include <string>
-#include <sstream>
-#include <unordered_map>
 #include <utility>
-#include "include/json.hpp"
+#include "json/json.hpp"
 
+// 클라이언트가 서버에게 보내는 메세지 구조체
 using json = nlohmann::json;
 
 struct ChatMessage {
@@ -27,6 +26,7 @@ struct ChatMessage {
     std::string target;
     std::string content;
 
+    // 인자 별 생성자
     ChatMessage() : command(ChatMessage::error) {}
 
     explicit ChatMessage(Command command)
@@ -41,6 +41,7 @@ struct ChatMessage {
     ChatMessage(Command command, std::string sender, std::string target, std::string content)
             : command(command), sender(std::move(sender)), target(std::move(target)), content(std::move(content)) {}
 
+    //구조체 내용 출력
     void showInfo() const {
         std::string commandStr;
         switch (command) {
@@ -57,8 +58,10 @@ struct ChatMessage {
                 commandStr = "error";
                 break;
         }
-        std::cout << "Command : " << commandStr << ", Sender : " << sender << ", target : " << target << ", content : "
-                  << content << "\n\n";
+        std::cout << "Command : " << commandStr
+                  << ", Sender : " << sender
+                  << ", target : " << target
+                  << ", content : " << content << "\n\n";
     }
 };
 

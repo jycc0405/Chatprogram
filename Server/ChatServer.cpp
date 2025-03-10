@@ -23,7 +23,7 @@ bool ChatServer::start() {
     sockaddr_in serverAddr{};
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(port);
-    serverAddr.sin_addr.s_addr = htons(INADDR_ANY);
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(serverSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) == -1) {
         std::cerr << "바인드 실패\n";
@@ -39,9 +39,9 @@ bool ChatServer::start() {
 
     std::cout << "서버 시작 : " << getHostInfo() << "\n";
 
-    acceptThread = std::thread(&ChatServer::acceptConnections, this);
-    monitorThread = std::thread(&ChatServer::monitorConsole, this);
-    cleaningThread = std::thread(&ChatServer::cleaningClient, this);
+    acceptThread = std::thread(&ChatServer::acceptConnections, this); // 연결 수락 쓰레드
+    monitorThread = std::thread(&ChatServer::monitorConsole, this); // 콘솔 처리 쓰레드
+    cleaningThread = std::thread(&ChatServer::cleaningClient, this); // 종료된 클라이언트 정리 쓰레드
 
     return true;
 }
@@ -83,6 +83,7 @@ void ChatServer::acceptConnections() {
         socklen_t addrLen = sizeof(clientAddr);
         SOCKET clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &addrLen);
 
+        // 서버가 종료되었으면 정상적인 연결이더라도 연결 종료
         if (!running) {
             if (clientSocket != INVALID_SOCKET) {
                 closesocket(clientSocket);
@@ -94,6 +95,7 @@ void ChatServer::acceptConnections() {
             continue;
         }
 
+        // 클라이언트 닉네임 수신
         char nickBuffer[101];
         std::fill(&nickBuffer[0], &nickBuffer[101], 0);
         int bytes_received = recv(clientSocket, nickBuffer, 100, 0);
@@ -106,6 +108,7 @@ void ChatServer::acceptConnections() {
             std::lock_guard<std::mutex> lockGuard(clientMutex);
             auto *newClient = new ClientConnection(clientSocket, nickname);
             clients.push_back(newClient);
+            // ChatMessage를 dispatcher에 전달하여 명령어 처리
             newClient->start([this](const ChatMessage &chatMessage) {
                 dispatcher.dispatch(chatMessage);
             });
@@ -119,21 +122,27 @@ void ChatServer::monitorConsole() {
     std::string input;
     while (running) {
         std::getline(std::cin, input);
+        // "/close"를 입력 시 서버 종료
         if (input == "/close") {
             std::cout << "서버 종료 명령\n";
             running = false;
+            // acceptConnections함수의 기존 연결 대기를 종료하기 위한 더미 연결
             SOCKET dummy = socket(AF_INET, SOCK_STREAM, 0);
             if (dummy != -1) {
                 sockaddr_in addr{};
                 addr.sin_family = AF_INET;
                 addr.sin_addr.s_addr = inet_addr("127.0.0.1");
                 addr.sin_port = htons(port);
-                connect(dummy, (sockaddr *) &addr, sizeof(addr));
+                if (connect(dummy, (sockaddr *) &addr, sizeof(addr)) < 0) {
+                    std::cerr << "더미 연결 실패";
+                    break;
+                }
                 closesocket(dummy);
             }
             break;
         } else if (!input.empty()) {
-            //명령어 입력
+            // 명령어 입력 (예시 kick, broadcast 등)
+            // 추후 기능 추가
         }
 
     }
@@ -152,6 +161,7 @@ void ChatServer::cleaningClient() {
     }
 }
 
+// 호스트의 이름, IPv4주소, 포트 번호를 보여주는 함수
 std::string ChatServer::getHostInfo() const {
     char hostBuffer[256];
     if (gethostname(hostBuffer, sizeof(hostBuffer)) == SOCKET_ERROR) {
@@ -214,7 +224,7 @@ void ChatServer::whisperMessage(const ChatMessage &chatMessage) {
 }
 
 void ChatServer::quitMessage(const ChatMessage &chatMessage) {
-    std::string fullMessage = chatMessage.sender + "이(가) 서버를 종료하였습니다.";
+    std::string fullMessage = chatMessage.sender + "이(가) 서버를 종료하였습니다.\n";
     std::cout << "브로드캐스트(종료메세지) : " + fullMessage;
 
     std::lock_guard<std::mutex> lock(clientMutex);

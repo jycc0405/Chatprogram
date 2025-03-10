@@ -18,13 +18,16 @@ ChatSession::~ChatSession() {
 }
 
 void ChatSession::start() {
+    // 서버에 닉네임 전송
     if (send(socket, nickname.c_str(), (int) nickname.size(), 0) == INVALID_SOCKET) {
         std::cerr << "서버 연결 실패\n";
         return;
     }
     std::cout << "서버 연결 성공. 채팅을 시작하세요. 종료는 '/quit' 입력하세요.\n";
 
+    // 메세지 수신 쓰레드 시작
     recvThread = std::thread(&ChatSession::receiveMessage, this);
+    // 메세지 송신 쓰레드는 메인 쓰레드에서 시작
     sendMessage();
     if (recvThread.joinable())
         recvThread.join();
@@ -38,11 +41,13 @@ void ChatSession::sendMessage() {
         if (message.empty())
             continue;
         else {
+            // 입력을 ChatMessage구조체에 저장 후 Json으로 전송
             ChatMessage chatMessage = transformInputParser(message);
             json j = chatMessage;
             std::string serialized = j.dump();
             send(socket, serialized.c_str(), (int) serialized.size(), 0);
 
+            // "/quit" 입력 시 클라이언트 종료
             if (message == "/quit") {
                 shutdown(socket, SD_BOTH);  // 소켓의 송수신을 종료하여 recv가 0을 반환하도록 함
                 active = false;
@@ -66,6 +71,7 @@ void ChatSession::receiveMessage() {
             break;
         }
         std::string receivedMsg(buffer, bytes_received);
+        // 서버로부터 가공된 메세지만 수신(메세지 처리 불필요)
         std::cout << receivedMsg << "\n";
     }
 }
@@ -76,6 +82,7 @@ std::string ltrim(const std::string &s) {
 }
 
 ChatMessage ChatSession::transformInputParser(const std::string &input) {
+    // 첫 글자가 '/'가 아니라면 "broadcast"로 전송
     if (input[0] != '/') {
         return {ChatMessage::broadcast, nickname, input};
     }
@@ -89,8 +96,6 @@ ChatMessage ChatSession::transformInputParser(const std::string &input) {
     std::string remainder;
     std::getline(iss, remainder);
     remainder = ltrim(remainder);
-
-    ChatMessage chatMessage;
 
     // 명령어에 따른 분기
     if (command == "broadcast") {
@@ -107,7 +112,7 @@ ChatMessage ChatSession::transformInputParser(const std::string &input) {
         }
 
         std::string content;
-        std::getline(restStream, content);
+        std::getline(restStream, content); // 세 번째 토큰: 내용
         content = ltrim(content);
         if (content.empty()) {
             std::cout << "귓속말 내용을 입력해주세요.\n";

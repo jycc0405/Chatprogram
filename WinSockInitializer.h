@@ -10,6 +10,7 @@
 #include <iostream>
 #pragma comment(lib, "Ws2_32.lib")
 
+// Windows용 Winsock 초기화 클래스
 class WinSockInitializer{
 public:
     WinSockInitializer(){

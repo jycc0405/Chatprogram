@@ -12,6 +12,7 @@
 
 #include "../ChatMessage.h"
 
+// 각 ChatMessage의 command에 따라 함수를 등록하고 handler를 호출하여 처리
 using CommandHandler = std::function<void(const ChatMessage &chatMessage)>;
 
 class CommandDispatcher {

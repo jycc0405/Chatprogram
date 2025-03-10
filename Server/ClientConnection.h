@@ -16,6 +16,7 @@
 #include "../ChatMessage.h"
 #include "CommandDispatcher.h"
 
+// 개별 클라이언트의 소켓, 닉네임 관리 및 메세지 수신 처리
 class ClientConnection {
 public:
     ClientConnection(SOCKET socket, const std::string &nickname);

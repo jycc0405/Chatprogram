@@ -8,6 +8,7 @@
 #include <ws2tcpip.h>
 #include <string>
 
+// 클라이언트 정보를 저장하는 구조체
 struct Client {
     SOCKET socket;
     std::string nickname;

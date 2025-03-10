@@ -10,6 +10,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
+// 서버와의 소켓 연결 관리 (생성, 연결, 종료)
 class ConnectionManager{
 public:
     ConnectionManager(std::string ip, int port);
