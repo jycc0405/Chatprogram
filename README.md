@@ -73,4 +73,4 @@ void ChatServer::registerCommands() {
 
 2. **낮은 결합도**: CommandDispatcher는 특정 메시지 핸들러 함수를 직접 호출하는 대신, 함수 포인터(std::function)를 통해 간접적으로 호출합니다. 이로 인해 CommandDispatcher는 ChatServer 클래스의 구체적인 구현 내용(예: broadcastMessage 함수)에 종속되지 않고, 재사용 가능한 유연한 구조를 가집니다.
 
-3. **명령어와 기능의 분리**: ChatServer는 메시지 처리 로직을 직접 dispatch 함수 내부에 구현하는 대신, 각 기능별로 분리된 함수(broadcastMessage, whisperMessage 등)를 정의하고 이를 CommandDispatcher에 등록하는 방식을 사용합니다. 이는 **단일 책임 원칙(Single Responsibility Principle)**을 따르는 좋은 방법입니다.
+3. **명령어와 기능의 분리**: ChatServer는 메시지 처리 로직을 직접 dispatch 함수 내부에 구현하는 대신, 각 기능별로 분리된 함수(broadcastMessage, whisperMessage 등)를 정의하고 이를 CommandDispatcher에 등록하는 방식을 사용합니다. 이는 **단일 책임 원칙(Single Responsibility Principle)** 을 따르기 위해 사용되었습니다.
