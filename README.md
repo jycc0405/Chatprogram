@@ -40,37 +40,86 @@
 - `공통`: 클라이언트와 서버가 공유하는 로직입니다.
 
   - `ChatMessage.h`: 채팅 메시지 데이터를 정의하는 구조체입니다.
+ 
+  - `WinSockInitializer`: Winsock 초기화 클래스입니다.
 
  ---
 
 ## 핵심 로직 상세 설명
 
-### CommandDispatcher 클래스
+### ChatServer 클래스의 ServerStart 메서드
 
-이 프로젝트의 핵심 패턴 중 하나인 CommandDispatcher 클래스는 `CommandDispatcher.cpp`와 `ChatServer.cpp` 파일에서 구현됩니다. 이 클래스는 들어오는 메시지의 `command`에 따라 특정 기능을 수행하는 핸들러 함수를 연결하고 호출하는 역할을 합니다.
+이 메서드는 **채팅 서버를 초기화하고 시작하는 핵심 로직**을 담당합니다. 서버 소켓을 생성하고, 특정 주소와 포트에 바인딩하며, 클라이언트 연결을 수락할 준비를 마친 후, 동시에 여러 작업을 처리하기 위해 멀티 스레드를 시작합니다.
 
-코드 예시 (`ChatServer.cpp`의 `registerCommands` 메서드)
+코드 예시 (`ChatServer.cpp`의 `start` 메서드)
 
 ```C++
 
-void ChatServer::registerCommands() {
-    // broadcast 명령어가 들어오면 broadcastMessage 함수 호출
-    dispatcher.registerCommand(ChatMessage::broadcast,
-                               std::bind(&ChatServer::broadcastMessage, this, std::placeholders::_1));
+bool ChatServer::start() {
+    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverSocket == -1) {
+        std::cerr << "소켓 생성 실패\n";
+        return false;
+    }
 
-    // whisper 명령어가 들어오면 whisperMessage 함수 호출
-    dispatcher.registerCommand(ChatMessage::whisper,
-                               std::bind(&ChatServer::whisperMessage, this, std::placeholders::_1));
+    sockaddr_in serverAddr{};
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(port);
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
 
-    // quit 명령어가 들어오면 quitMessage 함수 호출
-    dispatcher.registerCommand(ChatMessage::quit, std::bind(&ChatServer::quitMessage, this, std::placeholders::_1));
+    if (bind(serverSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) == -1) {
+        std::cerr << "바인드 실패\n";
+        return false;
+    }
+
+    if (listen(serverSocket, 5) == -1) {
+        std::cerr << "리스닝 실패\n";
+        return false;
+    }
+
+    running = true;
+
+    std::cout << "서버 시작 : " << getHostInfo() << "\n";
+
+    acceptThread = std::thread(&ChatServer::acceptConnections, this); // 연결 수락 쓰레드
+    monitorThread = std::thread(&ChatServer::monitorConsole, this); // 콘솔 처리 쓰레드
+    cleaningThread = std::thread(&ChatServer::cleaningClient, this); // 종료된 클라이언트 정리 쓰레드
+
+    return true;
 }
 ```
 
+#### 코드 설명
+
+- serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+  - 소켓 생성: AF_INET (IPv4) 주소 체계를 사용하고 SOCK_STREAM (TCP) 타입의 소켓을 생성합니다. 이 소켓이 클라이언트 연결을 수락하는 서버의 문 역할을 합니다.
+
+- bind(serverSocket, ...);
+
+  - bind: 생성된 소켓을 위에서 설정한 주소(serverAddr)에 연결합니다.
+
+- listen(serverSocket, 5);
+
+  - 연결 대기: 서버 소켓을 클라이언트의 접속 요청을 들을 수 있는 "리스닝" 상태로 전환합니다. 5는 동시에 대기열에 올릴 수 있는 최대 연결 요청 수를 의미합니다.
+
+- 멀티 스레드 시작
+
+  - 서버는 클라이언트 연결을 동시에 처리하기 위해 여러 스레드를 생성합니다.
+
+  - `acceptThread`: `acceptConnections` 메서드를 실행하여 클라이언트의 연결 요청을 지속적으로 수락합니다.
+
+  - `monitorThread`: `monitorConsole` 메서드를 실행하여 사용자가 콘솔에 입력하는 명령어를 처리합니다.
+
+  - `cleaningThread`: `cleaningClient` 메서드를 실행하여 연결이 종료된 클라이언트 소켓을 정리하는 작업을 수행합니다.
+
+  
+start() 메서드는 이 모든 초기화 과정이 성공하면 true를 반환하며, 서버가 정상적으로 작동을 시작했음을 알립니다. 만약 소켓 생성, 바인딩, 리스닝 과정 중 하나라도 실패하면 오류 메시지를 출력하고 false를 반환합니다.
+
 ### 예시 코드의 강점
 
-1. **높은 가독성 및 유지보수성**: registerCommands 함수를 보면 어떤 명령어가 어떤 함수에 연결되는지 명확하게 알 수 있습니다. 새로운 명령어를 추가하거나 기존 명령어를 수정할 때, 이 함수에 한 줄만 추가하거나 수정하면 되므로 코드의 확장과 유지보수가 용이합니다.
+1. **견고한 오류 처리 및 방어적 프로그래밍**: 서버 소켓 생성, 바인딩, 리스닝 등 각 단계에서 발생할 수 있는 오류를 명시적으로 확인하고 실패 시 즉시 종료합니다. 이는 예외 상황으로 인한 프로그램의 비정상적인 동작을 방지하고, 서버가 항상 신뢰할 수 있는 상태에서 시작되도록 보장합니다.
 
-2. **낮은 결합도**: CommandDispatcher는 특정 메시지 핸들러 함수를 직접 호출하는 대신, 함수 포인터(std::function)를 통해 간접적으로 호출합니다. 이로 인해 CommandDispatcher는 ChatServer 클래스의 구체적인 구현 내용(예: broadcastMessage 함수)에 종속되지 않고, 재사용 가능한 유연한 구조를 가집니다.
+2. **효율적인 멀티태스킹(Multi-tasking)을 위한 스레드 분리**: 클라이언트 연결 수락, 콘솔 명령어 모니터링, 종료된 클라이언트 정리와 같은 핵심 기능을 각각 별도의 스레드로 분리했습니다. 이로 인해 서버는 하나의 작업이 다른 작업의 진행을 막지 않고, 동시에 여러 클라이언트를 처리할 수 있는 **동시성(Concurrency)** 을 확보하여 성능과 응답성을 크게 향상시킵니다.
 
-3. **명령어와 기능의 분리**: ChatServer는 메시지 처리 로직을 직접 dispatch 함수 내부에 구현하는 대신, 각 기능별로 분리된 함수(broadcastMessage, whisperMessage 등)를 정의하고 이를 CommandDispatcher에 등록하는 방식을 사용합니다. 이는 **단일 책임 원칙(Single Responsibility Principle)** 을 따르기 위해 사용되었습니다.
+3. **명확한 역할 분리 및 모듈화**: start() 메서드는 서버 초기화 및 스레드 시작이라는 단일한 역할에만 집중합니다. 각 스레드가 담당하는 실제 로직은 acceptConnections, monitorConsole, cleaningClient와 같은 별도의 메서드에 구현되어 있어, 코드의 가독성을 높이고 유지보수를 용이하게 만듭니다.
